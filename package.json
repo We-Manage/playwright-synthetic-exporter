@@ -1,0 +1,30 @@
+{
+  "name": "playwright-synthetic-exporter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Run Playwright Test specs on a schedule and expose pass/fail, step timings and Web Vitals as Prometheus metrics.",
+  "license": "MIT",
+  "repository": "github:We-Manage/playwright-synthetic-exporter",
+  "bin": {
+    "playwright-synthetic-exporter": "src/runner.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/runner.mjs",
+    "once": "node src/runner.mjs --once",
+    "example": "node src/runner.mjs --once --config examples/checks/checks.yml",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@playwright/test": "1.65.0",
+    "web-vitals": "6.2.3",
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2"
+  }
+}

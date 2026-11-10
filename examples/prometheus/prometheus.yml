@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 30s
+
+rule_files:
+  - alerts.yml
+
+scrape_configs:
+  # One target per exporter; with several locations, instance tells them apart.
+  - job_name: playwright-synthetic
+    static_configs:
+      - targets: ["exporter:9470"]

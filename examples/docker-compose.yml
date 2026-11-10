@@ -1,0 +1,48 @@
+# Exporter, Prometheus and Grafana with the example checks and the dashboard:
+#   docker compose up -d
+# Grafana on http://localhost:3000 (anonymous admin, demo only), metrics on
+# http://localhost:9470/metrics, Prometheus on http://localhost:9090.
+services:
+  exporter:
+    image: ghcr.io/we-manage/playwright-synthetic-exporter:latest
+    build: ..
+    restart: unless-stopped
+    # Reaps the Chromium processes of finished runs.
+    init: true
+    # Chromium needs more shared memory than Docker's default 64 MB.
+    shm_size: 512m
+    mem_limit: 2g
+    volumes:
+      - ./checks:/app/checks:ro
+      - exporter-data:/data
+    ports:
+      - "127.0.0.1:9470:9470"
+    # Secrets for the specs, referenced as ${VAR} in checks.yml.
+    # env_file: [.env]
+
+  prometheus:
+    image: prom/prometheus:v3.16.0
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+
+  grafana:
+    image: grafana/grafana:13.3.0
+    restart: unless-stopped
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/playwright-synthetic.json
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+
+volumes:
+  exporter-data:
+  prometheus-data:

@@ -1,0 +1,30 @@
+groups:
+  - name: playwright-synthetic
+    rules:
+      # A single failing location is usually its own network; alert when the
+      # check fails everywhere it runs.
+      - alert: SyntheticCheckFailing
+        expr: max by (check) (synthetic_pw_success) == 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Synthetic check {{ $labels.check }} fails on every instance"
+          description: "The last runs of {{ $labels.check }} failed. The exporter log has the error, its data directory the trace of the last failed run."
+
+      - alert: SyntheticCheckOverdue
+        expr: time() - synthetic_pw_last_run_timestamp_seconds > 3 * synthetic_pw_interval_seconds
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Synthetic check {{ $labels.check }} has not run on {{ $labels.instance }}"
+          description: "The last run is older than three intervals: the exporter is stuck or has too many checks for one instance."
+
+      - alert: SyntheticExporterDown
+        expr: up{job="playwright-synthetic"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "playwright-synthetic-exporter on {{ $labels.instance }} is down"

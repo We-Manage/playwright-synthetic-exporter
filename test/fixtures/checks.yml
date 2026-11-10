@@ -1,0 +1,4 @@
+checks:
+  - name: broken
+    spec: broken.spec.ts
+    timeout: 15s

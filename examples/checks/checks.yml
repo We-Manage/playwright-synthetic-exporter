@@ -1,0 +1,32 @@
+# Checks of the example setup. Spec paths are relative to this file.
+defaults:
+  interval: 5m
+  timeout: 60s
+
+# Added to every series of every check.
+labels:
+  env: demo
+
+checks:
+  # Browser check: runs in headless Chromium and reports Web Vitals for every
+  # page it loads.
+  - name: playwright-docs
+    description: Opens playwright.dev and follows "Get started" to the installation guide
+    spec: docs-browser.spec.ts
+    interval: 5m
+    labels:
+      team: web
+
+  # API multistep check: only uses `request`, so no browser starts.
+  # JSONPlaceholder is a public fake API; writes are accepted but not stored.
+  - name: jsonplaceholder-api
+    description: Reads a user, lists their posts and creates a post via the JSONPlaceholder API
+    spec: api-flow.spec.ts
+    interval: 2m
+    timeout: 30s
+    labels:
+      team: api
+    env:
+      # ${VAR} and ${VAR:-default} come from the exporter's environment,
+      # which keeps secrets out of this file.
+      API_BASE_URL: "${API_BASE_URL:-https://jsonplaceholder.typicode.com}"
