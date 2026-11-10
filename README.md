@@ -122,7 +122,8 @@ docker run -d --name synthetic --init --shm-size 512m --memory 2g \
 - Checks run one at a time. A browser check takes about 1 GB of memory while
   it runs; an API check hardly any.
 - Prometheus scrapes `/metrics`. Scrapes only read the last results, so any
-  scrape interval works.
+  scrape interval works. VictoriaMetrics, vmagent, Telegraf and Elasticsearch:
+  see [docs/integrations.md](docs/integrations.md).
 
 Options, as flags or environment variables:
 
@@ -171,7 +172,8 @@ stands in for INP; INP itself only appears after interactions in the spec.
 
 [`dashboards/playwright-synthetic.json`](dashboards/playwright-synthetic.json)
 works with any Prometheus-compatible data source (Prometheus, VictoriaMetrics,
-Mimir, Thanos). Import it in Grafana under *Dashboards → New → Import*. It
+Mimir, Thanos), also when Telegraf collects the metrics
+([integrations](docs/integrations.md)). Import it in Grafana under *Dashboards → New → Import*. It
 shows:
 
 - failing, overdue and failed runs at a glance
