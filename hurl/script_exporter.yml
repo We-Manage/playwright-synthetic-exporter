@@ -1,0 +1,15 @@
+# Config for ricoberger/script_exporter: one script per hurl flow.
+# Probe with /probe?script=jsonplaceholder-api
+scripts:
+  - name: jsonplaceholder-api
+    command:
+      - /usr/local/bin/hurl-probe
+    args:
+      - /etc/hurl-checks/example.hurl
+    timeout:
+      max_timeout: 30
+      enforced: true
+  # With secrets: keep them in a variables file next to the flow.
+  # - name: shop-api
+  #   command: [/usr/local/bin/hurl-probe]
+  #   args: [--variables-file, /etc/hurl-checks/shop.vars, /etc/hurl-checks/shop.hurl]

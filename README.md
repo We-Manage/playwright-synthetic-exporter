@@ -145,6 +145,13 @@ apart. A check that fails from one location only is usually that location's
 network. The example alert rules therefore alert when a check fails
 everywhere.
 
+## Lightweight API flows with hurl
+
+A flow that is just a chain of requests does not need Node or a browser:
+[`hurl/`](hurl/) has `hurl-probe`, which runs a [hurl](https://hurl.dev) file
+behind script_exporter and reports duration and result per request, with the
+same `index` and `step` labels as here.
+
 ## Metrics
 
 Every series carries `check` and the labels from the checks file.

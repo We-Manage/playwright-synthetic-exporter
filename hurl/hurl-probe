@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+"""Run one hurl flow and print a duration and a result per request as metrics.
+
+Usage: hurl-probe [--variables-file FILE] FILE.hurl
+
+Meant as the command of a script_exporter script: script_exporter adds
+script_success and script_duration_seconds for the whole flow, this adds
+synthetic_hurl_step_duration_seconds and synthetic_hurl_step_success per
+request. The step label is method and path from the hurl file, so captured
+values such as {{user_id}} stay templated and do not create a new series per
+run. The exit code is hurl's.
+
+Python 3 standard library only. HURL_BIN points to hurl (default: from PATH).
+"""
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+
+REQUEST = re.compile(r"^\s*([A-Z]+)\s+(\S+)")
+
+
+def step_name(source, line):
+    """Method and path of the request on that line, without scheme, host and query."""
+    if not 1 <= line <= len(source):
+        return f"line {line}"
+    m = REQUEST.match(source[line - 1])
+    if not m:
+        return f"line {line}"
+    method, url = m.groups()
+    path = re.sub(r"^[a-z]+://[^/]+", "", url).split("?", 1)[0] or "/"
+    return f"{method} {path}"
+
+
+def esc(value):
+    return str(value).replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ")
+
+
+def metrics(report, source):
+    """Exposition text for hurl's --json report of one file."""
+    try:
+        entries = json.loads(report).get("entries", [])
+    except ValueError:
+        entries = []
+    out = [
+        "# HELP synthetic_hurl_step_duration_seconds Duration of each request of the flow on this run.",
+        "# TYPE synthetic_hurl_step_duration_seconds gauge",
+    ]
+    results = []
+    for e in entries:
+        labels = f'index="{e["index"]:02d}",step="{esc(step_name(source, e["line"]))}"'
+        # An entry without calls never got a response (connection or URL error).
+        ok = bool(e.get("calls")) and all(a.get("success") for a in e.get("asserts", []))
+        out.append(f"synthetic_hurl_step_duration_seconds{{{labels}}} {e.get('time', 0) / 1000}")
+        results.append((labels, ok))
+    out += [
+        "# HELP synthetic_hurl_step_success 1 if the request got a response and all its asserts passed.",
+        "# TYPE synthetic_hurl_step_success gauge",
+    ]
+    out += [f"synthetic_hurl_step_success{{{labels}}} {1 if ok else 0}" for labels, ok in results]
+    return "\n".join(out)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog="hurl-probe", description="Run a hurl flow, print metrics per request.")
+    parser.add_argument("--variables-file", help="hurl variables file (name=value per line), e.g. for tokens")
+    parser.add_argument("file", help="the .hurl file")
+    args = parser.parse_args(argv)
+
+    cmd = [os.environ.get("HURL_BIN", "hurl"), "--test", "--no-color", "--json"]
+    if args.variables_file:
+        cmd += ["--variables-file", args.variables_file]
+    proc = subprocess.run(cmd + [args.file], stdout=subprocess.PIPE, text=True)
+    with open(args.file, encoding="utf-8") as f:
+        source = f.read().splitlines()
+    print(metrics(proc.stdout, source))
+    return proc.returncode
+
+
+if __name__ == "__main__":
+    sys.exit(main())

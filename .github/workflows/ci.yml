@@ -27,6 +27,27 @@ jobs:
       - name: A failing check is reported as failing
         run: "! node src/runner.mjs --once --config test/fixtures/checks.yml"
 
+  hurl:
+    runs-on: ubuntu-latest
+    env:
+      # renovate: datasource=github-releases depName=Orange-OpenSource/hurl
+      HURL_VERSION: "8.1.0"
+      # A version bump fails here until the checksum of the new .deb is set.
+      HURL_SHA256: "c56222c8923d3940533ac3d7085f66cb6fa6c05639f33aaeef8d857ab70622f9"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Unit tests
+        run: python3 -m unittest discover -s test -p '*_test.py' -v
+      - name: Install hurl
+        run: |
+          curl -fsSLo hurl.deb "https://github.com/Orange-OpenSource/hurl/releases/download/${HURL_VERSION}/hurl_${HURL_VERSION}_amd64.deb"
+          echo "${HURL_SHA256}  hurl.deb" | sha256sum -c -
+          sudo apt-get install -y ./hurl.deb
+      - name: Example flow passes
+        run: |
+          hurl/hurl-probe hurl/example.hurl | tee metrics.txt
+          grep -qF 'synthetic_hurl_step_success{index="02",step="GET /posts"} 1' metrics.txt
+
   image:
     needs: test
     runs-on: ubuntu-latest
