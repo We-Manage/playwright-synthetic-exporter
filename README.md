@@ -154,13 +154,16 @@ Every series carries `check` and the labels from the checks file.
 | `synthetic_pw_check_info` | `spec`, `interval`, `timeout`, `description` | 1 per configured check |
 | `synthetic_pw_success` | | 1 if every test passed on the last run |
 | `synthetic_pw_duration_seconds` | | test duration of the last run |
-| `synthetic_pw_step_duration_seconds` | `step` | per top-level `test.step` |
-| `synthetic_pw_step_success` | `step` | per top-level `test.step` |
+| `synthetic_pw_step_duration_seconds` | `index`, `step` | per top-level `test.step` |
+| `synthetic_pw_step_success` | `index`, `step` | per top-level `test.step` |
 | `synthetic_pw_last_run_timestamp_seconds` | | end of the last run |
 | `synthetic_pw_interval_seconds` | | configured interval |
 | `synthetic_pw_runs_total` | `result` (`success`, `failure`) | runs since start |
 | `synthetic_pw_web_vital_seconds` | `page`, `metric` (`lcp`, `fcp`, `ttfb`, `tbt`, `inp`) | last run |
 | `synthetic_pw_cls` | `page` | cumulative layout shift, last run |
+
+`index` is the position of the step in the run (`01`, `02`, ...), so panels
+and tables can show the steps in execution order.
 
 Web Vitals are measured with Google's [web-vitals](https://github.com/GoogleChrome/web-vitals)
 library inside the page. They are lab values from the exporter's location and

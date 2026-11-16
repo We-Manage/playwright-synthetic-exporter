@@ -865,9 +865,9 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (check, step, instance) (synthetic_pw_step_duration_seconds{ check=~\"$check\", instance=~\"$instance\" })",
+          "expr": "max by (check, index, step, instance) (synthetic_pw_step_duration_seconds{ check=~\"$check\", instance=~\"$instance\" })",
           "refId": "A",
-          "legendFormat": "{{check}} / {{step}} @ {{instance}}"
+          "legendFormat": "{{check}} / {{index}} {{step}} @ {{instance}}"
         }
       ],
       "title": "Step duration",
@@ -950,9 +950,9 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by (check, step, instance) (synthetic_pw_step_success{ check=~\"$check\", instance=~\"$instance\" })",
+          "expr": "min by (check, index, step, instance) (synthetic_pw_step_success{ check=~\"$check\", instance=~\"$instance\" })",
           "refId": "A",
-          "legendFormat": "{{check}} / {{step}} @ {{instance}}"
+          "legendFormat": "{{check}} / {{index}} {{step}} @ {{instance}}"
         }
       ],
       "title": "Step status",

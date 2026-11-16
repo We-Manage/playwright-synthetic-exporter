@@ -38,7 +38,7 @@ if (args.help) {
   process.exit(0);
 }
 
-const RESERVED = new Set(['check', 'step', 'page', 'metric', 'result', 'spec', 'interval', 'timeout', 'description']);
+const RESERVED = new Set(['check', 'index', 'step', 'page', 'metric', 'result', 'spec', 'interval', 'timeout', 'description']);
 
 function checkLabels(labels, where) {
   for (const k of Object.keys(labels ?? {})) {
@@ -181,6 +181,8 @@ function metrics() {
   const family = (name, type, help) => out.push(`# HELP ${name} ${help}`, `# TYPE ${name} ${type}`);
   const base = (s) => ({ ...s.check.labels, check: s.check.name });
   const ran = state.filter((s) => s.last);
+  // index keeps the execution order, two digits so it also sorts as a string.
+  const stepLabels = (s, st, i) => ({ ...base(s), index: String(i + 1).padStart(2, '0'), step: st.title });
 
   family('synthetic_pw_check_info', 'gauge', 'One series per configured check, with its spec, interval and description.');
   for (const s of state)
@@ -197,9 +199,9 @@ function metrics() {
   for (const s of state)
     for (const [result, n] of Object.entries(s.runs)) out.push(`synthetic_pw_runs_total${labels({ ...base(s), result })} ${n}`);
   family('synthetic_pw_step_duration_seconds', 'gauge', 'Duration of each top-level test.step on the last run.');
-  for (const s of ran) for (const st of s.last.steps) out.push(`synthetic_pw_step_duration_seconds${labels({ ...base(s), step: st.title })} ${st.duration}`);
+  for (const s of ran) s.last.steps.forEach((st, i) => out.push(`synthetic_pw_step_duration_seconds${labels(stepLabels(s, st, i))} ${st.duration}`));
   family('synthetic_pw_step_success', 'gauge', '1 if the top-level test.step passed on the last run.');
-  for (const s of ran) for (const st of s.last.steps) out.push(`synthetic_pw_step_success${labels({ ...base(s), step: st.title })} ${st.ok ? 1 : 0}`);
+  for (const s of ran) s.last.steps.forEach((st, i) => out.push(`synthetic_pw_step_success${labels(stepLabels(s, st, i))} ${st.ok ? 1 : 0}`));
   family('synthetic_pw_web_vital_seconds', 'gauge', 'Lab Web Vitals per page on the last run (lcp, fcp, ttfb, tbt, inp).');
   for (const s of ran)
     for (const [page, v] of Object.entries(s.last.vitals))
