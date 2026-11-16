@@ -3,7 +3,7 @@
 The exporter serves plain Prometheus metrics on `/metrics`. Anything that can
 scrape Prometheus metrics can collect them. The dashboard and the alert rules
 use PromQL, so they work with Prometheus and everything that speaks PromQL
-(VictoriaMetrics, Mimir, Thanos, Grafana Cloud). They need the `instance`
+(VictoriaMetrics, Mimir, Thanos, hosted Prometheus-compatible services). They need the `instance`
 label to tell exporters apart; Prometheus and vmagent set it themselves, with
 Telegraf you set it yourself (see below).
 
@@ -42,7 +42,7 @@ import the dashboard.
 
 If Telegraf already runs on the host, let it scrape the exporter and send the
 metrics on with remote write, to VictoriaMetrics, Prometheus (with
-`--web.enable-remote-write-receiver`), Mimir or Grafana Cloud:
+`--web.enable-remote-write-receiver`), Mimir or any other remote-write endpoint:
 
 ```toml
 [[inputs.prometheus]]
@@ -72,6 +72,47 @@ metrics on with remote write, to VictoriaMetrics, Prometheus (with
 (`synthetic_pw_success_gauge`) and the dashboard stays empty. Labels from the
 checks file, `check`, `step` and `page` arrive unchanged; Telegraf's global
 tags and `host` are added.
+
+## hurl-probe
+
+[`hurl-probe`](../hurl/) runs behind script_exporter, and every scrape of
+`/probe?script=<name>` runs the flow once, so the scrape interval is the check
+interval. Give each flow its own `check` label.
+
+Prometheus or vmagent, one job per flow:
+
+```yaml
+scrape_configs:
+  - job_name: hurl-jsonplaceholder-api
+    metrics_path: /probe
+    params:
+      script: [jsonplaceholder-api]
+    scrape_interval: 1m
+    scrape_timeout: 40s
+    static_configs:
+      - targets: ["127.0.0.1:9469"]
+        labels:
+          check: jsonplaceholder-api
+```
+
+Telegraf, one input per flow:
+
+```toml
+[[inputs.prometheus]]
+  urls = ["http://127.0.0.1:9469/probe?script=jsonplaceholder-api&timeout=30"]
+  metric_version = 2
+  interval = "1m"
+  # Longer than the flow may take, or Telegraf gives up before hurl does.
+  response_timeout = "35s"
+  fieldinclude = ["script_*", "synthetic_hurl_*"]
+  tagexclude = ["url"]
+  [inputs.prometheus.tags]
+    check = "jsonplaceholder-api"
+    instance = "synthetic-1"
+```
+
+The outputs are the same as above. `script_success` is the result of the
+whole flow, `synthetic_hurl_step_*` the requests in it.
 
 ## Elasticsearch
 

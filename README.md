@@ -12,8 +12,8 @@ Self-hosted synthetic monitoring for:
 - **Browser checks:** user journeys in headless Chromium, with LCP, FCP, TTFB,
   CLS, TBT and INP per page.
 
-The checks are ordinary Playwright specs. Specs from an existing test suite or
-from Checkly multistep and browser checks work after changing one import.
+The checks are ordinary Playwright specs. Specs from an existing Playwright test
+suite work after changing one import.
 
 > Not affiliated with or endorsed by Microsoft. Playwright is a project of
 > Microsoft; this exporter runs it.
@@ -98,10 +98,9 @@ test('checkout', async ({ page }) => {
 
 `examples/checks/` has a browser check and an API multistep check.
 
-### Coming from Checkly
+### Bringing existing specs
 
-Checkly multistep and browser checks are Playwright specs. Replace
-`import { test, expect } from '@playwright/test'` with
+Replace `import { test, expect } from '@playwright/test'` with
 `import { test, expect } from 'playwright-synthetic-exporter'`, move
 environment variables into `env`, and add the check to `checks.yml`.
 
